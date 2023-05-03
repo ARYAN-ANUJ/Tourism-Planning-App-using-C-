@@ -1,16 +1,29 @@
 #include <bits/stdc++.h>
-
+#include <fstream>
+#include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <ctime>
+#include <conio.h>
+#include <iomanip>
 using namespace std;
+bool b = true;
 
 class Details
 {
 private:
     // Json object which contains details of different users, Use File Handling here.
     string username;
-    string password; // Hidden from view 
+    string password; // Hidden from view
     string email;
     string firstname;
     string lastname;
+
+protected:
+    string getPassword()
+    {
+        return password;
+    }
 
 public:
     void setUsername(string username)
@@ -51,45 +64,120 @@ public:
     }
     bool checkNewUser()
     {
-        // Check if the user is new or not from json
-        // Return true if new, false otherwise
-        // If new user redirect to login page to sign up
-        // else continue
-    }
-    void displayUserdetails()
-    {
-        // Display specific user details in the system
+        ifstream file("users.txt");
+        string line;
+        while (getline(file, line))
+        {
+            if (line.find(username) != string::npos)
+            {
+                // user found
+                file.close();
+                return false;
+            }
+        }
+        file.close();
+        // user not found
+        ofstream outfile("users.txt", ios::app);
+        outfile << username << " " << password << " " << email << " " << firstname << " " << lastname << endl;
+        outfile.close();
+        return true;
     }
 };
 
-class HolidayType
+void signup()
 {
-private:
-    int choice;
-    int noOfPeople;
+    Details newUser;
+    string username, password, email, firstname, lastname;
+    cout << "\033[0;36m";
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your desired username: ";
+    getline(cin, username);
+    newUser.setUsername(username);
 
-public:
-    void setChoice(int choice)
-    {
-        this->choice = choice;
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your desired password: ";
+    password = "";
+    char ch = getch();
+    while (ch != 13)
+    { // 13 is the ASCII code for Enter key
+        password.push_back(ch);
+        cout << "*";
+        ch = getch();
     }
-    void setNoOfPeople(int noOfPeople)
+    cout << endl;
+    newUser.setPassword(password);
+
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your email: ";
+    getline(cin, email);
+    newUser.setEmail(email);
+
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your first name: ";
+    getline(cin, firstname);
+    newUser.setFirstname(firstname);
+
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your last name: ";
+    getline(cin, lastname);
+    newUser.setLastname(lastname);
+    cout<<"\033[0m";
+
+    if (newUser.checkNewUser())
     {
-        this->noOfPeople = noOfPeople;
+        cout << "\033[0;32m";
+        cout << "Congratulations! Your account has been created." << endl;
+        cout << "\033[0m";
     }
-    int getChoice()
+    else
     {
-        return choice;
+        cout << "\033[0;31m";
+        cout << "Error: Username already exists. Please choose a different one." << endl;
+        cout << "\033[0m";
     }
-    int getNoOfPeople()
+}
+void signin()
+{
+    string username, password;
+    bool userFound = false;
+    cout << "\n\t\t\t\t\t\t\t\t\t\t_________________________________________________________\n\n";
+    cout << " \033[93m";
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your username: ";
+    
+    getline(cin, username);
+
+    cout << "\n\t\t\t\t\t\t\t\t\t\tPlease enter your password: ";
+    password = "";
+    
+    char ch = getch();
+    while (ch != 13)
+    { // 13 is the ASCII code for Enter key
+        password.push_back(ch);
+        cout << "*";
+        ch = getch();
+    }
+    cout << endl;
+
+    ifstream file("users.txt");
+    string line;
+    while (getline(file, line))
     {
-        return noOfPeople;
+        if (line.find(username + " " + password) != string::npos)
+        {
+            userFound = true;
+            break;
+        }
     }
-    void menu()
+    file.close();
+
+    if (userFound)
     {
-        // Display menu options and get user choice
+        cout << "\n\t\t\t\t\t\t\t\t\t\tWelcome back, " << username << "!" << endl;
+        cout << "\033[0m";
+        b = false;
     }
-};
+    else
+    {
+        cout << "\033[91m";
+         cout << "\n\t\t\t\t\t\t\t\t\t\tError: Invalid username or password." << endl;
+        cout << "\033[0m";
+    }
+}
 
 class Location
 {
@@ -97,6 +185,8 @@ private:
     string sourceName;
     string destinationName;
     string description;
+    friend class Transport;
+    friend class Itineraries;
 
 public:
     void setSourceName(string sourceName)
@@ -123,13 +213,31 @@ public:
     {
         return description;
     }
-    vector<string> shortestPath()
-    {
-        // Calculate the shortest path and return a vector containing the best mode of transport
-    }
-    void viewDestinationName()
+    void viewDestinationName(string destinationName)
     {
         // Display the description of the destination
+        ifstream infile("destinations.txt");
+        map<string, string> destinations;
+        string line;
+        while (getline(infile, line))
+        {
+            int pos = line.find(":");
+            string destination = line.substr(0, pos);
+            string description = line.substr(pos + 1);
+            destinations[destination] = description;
+        }
+        infile.close();
+        // Display the description of the destination
+        if (destinations.find(destinationName) != destinations.end())
+        {
+            cout << destinationName << ":" << endl;
+            cout << "\n\n\t\t\t\t\t\t\t\t\t"<< destinations[destinationName] << endl;
+        }
+        else
+        {   cout<<"\033[91m";
+            cout << "Destination description not found." << endl;
+            cout<< "\033[0m";
+        }
     }
 };
 
@@ -138,11 +246,13 @@ class Itineraries
 private:
     string nameOfPlan;
     int noOfDays;
-    double planCost;
-    string comments;
-    vector<string> facilities;
+    int planCost;
+    int no_of_people;
+    string acc;
+    string tra;
 
 public:
+    vector<bool> facilities;
     void setNameOfPlan(string nameOfPlan)
     {
         this->nameOfPlan = nameOfPlan;
@@ -151,17 +261,25 @@ public:
     {
         this->noOfDays = noOfDays;
     }
-    void setPlanCost(double planCost)
+    void setPlanCost(int pc)
     {
-        this->planCost = planCost;
+        this->planCost = pc;
     }
-    void setComments(string comments)
+    void setno_of_people(int nop)
     {
-        this->comments = comments;
+        this->no_of_people = nop;
     }
-    void setFacilities(vector<string> facilities)
+    void setFacilities(vector<bool> facilities)
     {
         this->facilities = facilities;
+    }
+    void setAccomodation(string accomod)
+    {
+        this->acc = accomod;
+    }
+    void setTransport(string t)
+    {
+        this->tra = t;
     }
     string getNameOfPlan()
     {
@@ -171,47 +289,51 @@ public:
     {
         return noOfDays;
     }
-    double getPlanCost()
+    int getPlanCost()
     {
         return planCost;
     }
-    string getComments()
+    int getno_of_people()
     {
-        return comments;
+        return no_of_people;
     }
-    vector<string> getFacilities()
+    vector<bool> getFacilities()
     {
         return facilities;
     }
-    void viewPlan()
+    string getAccomodation()
     {
-        // Display different plans according to facilities and no of days
+        return acc;
+    }
+    string getTransport()
+    {
+        return tra;
     }
 };
 
 class Facilities
 {
 protected:
-    string choosefacility;
-    float fcost;
+    vector<bool> choosefacility;
+    int fcost;
 
 public:
-    void setChooseFacility(string facility)
+    void setChooseFacility(vector<bool> facility)
     {
         choosefacility = facility;
     }
 
-    string getChooseFacility()
+    vector<bool> getChooseFacility()
     {
         return choosefacility;
     }
 
-    void setFCost(float cost)
+    void setFCost(int cost)
     {
         fcost = cost;
     }
 
-    float getFCost()
+    int getFCost()
     {
         return fcost;
     }
@@ -222,404 +344,166 @@ public:
 class Transport : public Facilities
 {
 private:
-    string modeOfTransport;
-    float tplancost;
-    string sname;
-    string dname;
-    bool tip;
+    int tplancost;
 
 public:
-    void setModeOfTransport(string mode)
-    {
-        modeOfTransport = mode;
-    }
-
-    string getModeOfTransport()
-    {
-        return modeOfTransport;
-    }
-
-    void setTPLanCost(float cost)
+    void setTPLanCost(int cost)
     {
         tplancost = cost;
     }
 
-    float getTPLanCost()
+    int getTPLanCost()
     {
         return tplancost;
-    }
-
-    void setSName(string s)
-    {
-        sname = s;
-    }
-
-    string getSName()
-    {
-        return sname;
-    }
-
-    void setDName(string d)
-    {
-        dname = d;
-    }
-
-    string getDName()
-    {
-        return dname;
-    }
-
-    void setTIP(bool val)
-    {
-        tip = val;
-    }
-
-    bool getTIP()
-    {
-        return tip;
     }
 
     void facilitiesMenu()
     {
-        cout << "Choose mode of transport: " << endl;
-        // provide options
+        cout << "\n\n\t\t\t\t\t\t\t\t\tChoose mode of transport: " << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t1. Flights" << endl;
+        cout << "\t\t\t\t\t\t\t\t\t2. Trains" << endl;
+        cout << "\t\t\t\t\t\t\t\t\t3. Bus" << endl;
     }
 
-    vector<string> timetakenforeachmodeoftransport()
-    {
-        vector<string> transportModes;
-        // calculate travel duration and add to transportModes
-        return transportModes;
-    }
-
-    void cancelbooking()
-    {
-        // code to cancel booking
-    }
-
-    void viewbooking()
-    {
-        // code to view booking
-    }
-
-    float calctotaltplancost()
-    {
-        return tplancost;
-    }
-
-    bool tipon()
+    bool tipon(Itineraries plans[])
     {
         // code to add or remove transport from plan
+        char ch;
+        cout << "\n\n\t\t\t\t\t\t\t\t\tAdd Transport to Plan? (Y/N): ";
+        cin >> ch;
+        if (ch == 'Y' || ch == 'y')
+        {
+            facilitiesMenu();
+            int ctot;
+            cout << "\n\t\t\t\t\t\t\t\t\tPlese enter SR. no :- \t";
+            cin >> ctot;
+            srand(time(0));
+            string flights[] = {"Business class", "Premium Class", "Helicopter"};
+            string trains[] = {"AC class", "Sleeper Class", "General Class"};
+            string buses[] = {"AC Bus", "Volvo Bus", "Luxury Bus"};
+            if (ctot == 1)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setTransport(flights[rand() % 3]);
+                }
+                tplancost += 300;
+            }
+            else if (ctot == 2)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setTransport(trains[rand() % 3]);
+                }
+                tplancost += 200;
+            }
+            else if (ctot == 3)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setTransport(buses[rand() % 3]);
+                }
+                tplancost += 150;
+            }
+            cout << "\n\t\t\t\t\t\t\t\t\tTransport Selected and Added to Plan.\n";
+            fcost += tplancost;
+            return 1;
+        }
+        else
+        {
+            cout << "\n\t\t\t\t\t\t\t\t\tTransport Not Added to Plan\n";
+            return 0;
+        }
     }
 };
 
 class Accomodation : public Facilities
 {
 private:
-    vector<string> typeofacc;
-    float aplancost;
-    string checkindate;
-    string checkoutdate;
+    int aplancost;
     int noofpeople;
-    bool aip;
 
 public:
-    void setTypeOfAcc(vector<string> acc)
-    {
-        typeofacc = acc;
-    }
-
-    vector<string> getTypeOfAcc()
-    {
-        return typeofacc;
-    }
-
-    void setAPLanCost(float cost)
+    void setAPLanCost(int cost)
     {
         aplancost = cost;
     }
-
-    float getAPLanCost()
-    {
-        return aplancost;
-    }
-
-    void setCheckInDate(string date)
-    {
-        checkindate = date;
-    }
-
-    string getCheckInDate()
-    {
-        return checkindate;
-    }
-
-    void setCheckOutDate(string date)
-    {
-        checkoutdate = date;
-    }
-
-    string getCheckOutDate()
-    {
-        return checkoutdate;
-    }
-
     void setNoOfPeople(int people)
     {
         noofpeople = people;
     }
-
     int getNoOfPeople()
     {
         return noofpeople;
     }
-
     void facilitiesMenu()
     {
-        cout << "Choose type of accommodation: " << endl;
-        // provide options
+        cout << "\n\n\t\t\t\t\t\t\t\t\tChoose type of Accomodation: " << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t1. Hotels" << endl;
+        cout << "\t\t\t\t\t\t\t\t\t2. Resorts" << endl;
+        cout << "\t\t\t\t\t\t\t\t\t3. GuestHouse" << endl;
     }
-
-    void setACost(vector<string> types)
-    {
-        typeofacc = types;
-        vector <string> facilities_list;
-        vector <int> facilities;
-        for (int i = 0; i < types.size(); i++)
-        {
-            if (types[i] == "3 Star Hotel")
-            {
-                facilities_list.push_back("Air conditioning");
-                facilities.push_back(100);
-                facilities_list.push_back("Television");
-                facilities.push_back(50);
-                facilities_list.push_back("Free WiFi");
-                facilities.push_back(20);
-                aplancost += 200;
-            }
-            else if (types[i] == "5 Star Hotel")
-            {
-                facilities_list.push_back("Air conditioning");
-                facilities.push_back(150);
-                facilities_list.push_back("Television");
-                facilities.push_back(75);
-                facilities_list.push_back("Free WiFi");
-                facilities.push_back(30);
-                facilities_list.push_back("Swimming Pool");
-                facilities.push_back(100);
-                facilities_list.push_back("Gym");
-                facilities.push_back(75);
-                aplancost += 500;
-            }
-            // Similarly add more options and facilities
-        }
-        fcost += aplancost;
-    }
-
     int getAplancost()
     {
         return aplancost;
     }
-    void cancelacc()
-    {
-        // Cancel Accomodation
-        vector<string> facilities_list;
-        vector<int> facilities;
-        cout << "Accommodation Cancelled.\n";
-        fcost -= aplancost;
-        aplancost = 0;
-        typeofacc.clear();
-        checkindate = "";
-        checkoutdate = "";
-        noofpeople = 0;
-        facilities.clear();
-        facilities_list.clear();
-    }
-    void viewacc()
-    {
-        // View Accomodation Details
-        vector<string> facilities_list;
-        vector<int> facilities;
-        cout << "Accomodation Details:\n";
-        cout << "Check-in Date: " << checkindate << endl;
-        cout << "Check-out Date: " << checkoutdate << endl;
-        cout << "Number of People: " << noofpeople << endl;
-        cout << "Type of Accomodation:\n";
-        for (int i = 0; i < typeofacc.size(); i++)
-        {
-            cout << i + 1 << ") " << typeofacc[i] << endl;
-        }
-        cout << "Facilities:\n";
-        for (int i = 0; i < facilities_list.size(); i++)
-        {
-            cout << facilities_list[i] << " - " << facilities[i] << endl;
-        }
-        cout << "Accomodation Cost: " << aplancost << endl;
-    }
-    void aipon()
+    bool aipon(Itineraries plans[])
     {
         // Add Accomodation in Plan
         char ch;
-        cout << "Add Accomodation to Plan? (Y/N): ";
+        cout << "\n\t\t\t\t\t\t\t\t\tAdd Accomodation to Plan? (Y/N): ";
         cin >> ch;
         if (ch == 'Y' || ch == 'y')
         {
+            facilitiesMenu();
+            int ctoa;
+            cout << "\n\t\t\t\t\t\t\t\t\tPlese enter SR. no :- \t";
+            cin >> ctoa;
+            srand(time(0));
+            string hotels[] = {"Luxury Hotel", "5-Star Hotel", "3-Star Hotel"};
+            string resorts[] = {"Beach Resort", "Raaga Mayuri Resort", "Entertainment Resorts"};
+            string ghouses[] = {"AC GuestHouse", "Single - Room", "Shared - Rooms"};
+            if (ctoa == 1)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setAccomodation(hotels[rand() % 3]);
+                }
+                aplancost += 300;
+            }
+            else if (ctoa == 2)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setAccomodation(resorts[rand() % 3]);
+                }
+                aplancost += 150;
+            }
+            else if (ctoa == 3)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    plans[i].setAccomodation(ghouses[rand() % 3]);
+                }
+                aplancost += 100;
+            }
+            cout << "\n\t\t\t\t\t\t\t\t\tAccomodation Plan Selected and Added to Plan.\n";
             fcost += aplancost;
-            cout << "Accomodation Added to Plan.\n";
+            return 1;
         }
         else
         {
-            cout << "Accomodation Not in Plan";
+            cout << "\n\t\t\t\t\t\t\t\t\tAccomodation Not Added to Plan";
+            return 0;
         }
     }
 };
 
-class TourGuide : public Facilities
-{
-private:
-    bool tourg;
-    float tgplancost;
-    string name;
-    string language;
-    bool availability;
-    float rating;
-
-public:
-    // Constructor
-    TourGuide()
-    {
-        tourg = false;
-        tgplancost = 0.0f;
-        name = "";
-        language = "";
-        availability = false;
-        rating = 0.0f;
-    }
-
-    // Getter and setter functions
-    void setTourg(bool value)
-    {
-        tourg = value;
-    }
-    bool getTourg()
-    {
-        return tourg;
-    }
-
-    void setTgPlanCost(float value)
-    {
-        tgplancost = value;
-    }
-    float getTgPlanCost()
-    {
-        return tgplancost;
-    }
-
-    void setName(string value)
-    {
-        name = value;
-    }
-    string getName()
-    {
-        return name;
-    }
-
-    void setLanguage(string value)
-    {
-        language = value;
-    }
-    string getLanguage()
-    {
-        return language;
-    }
-
-    void setAvailability(bool value)
-    {
-        availability = value;
-    }
-    bool getAvailability()
-    {
-        return availability;
-    }
-
-    void setRating(float value)
-    {
-        rating = value;
-    }
-    float getRating()
-    {
-        return rating;
-    }
-
-    // Member functions
-    void manageBooking();
-    void offerRecommendation();
-    void languageTranslation();
-    void calcTgPlanCost();
-    void tgIpon();
-};
-
-class Meals : public Facilities
-{
-private:
-    string typeofmeal;
-    double mcost;
-    Accomodation *a;
-
-public:
-    Meals(Accomodation *a)
-    {
-        this->a = a;
-    }
-
-    // Set functions
-    void setMealType(string typeofmeal)
-    {
-        this->typeofmeal = typeofmeal;
-    }
-
-    void setMealCost(double mcost)
-    {
-        this->mcost = mcost;
-    }
-
-    // Get functions
-    string getMealType()
-    {
-        return typeofmeal;
-    }
-
-    double getMealCost()
-    {
-        return mcost;
-    }
-
-    // Add meal service to accomodation
-    /*void addMealServiceToAcc()
-    {
-        a->setAccService("Meal Service");
-    }*/
-
-    // View available meals
-    void viewMeals()
-    {
-        cout << "Available Meals: Breakfast, Lunch, Dinner, Snacks" << endl;
-    }
-
-    // Calculate total cost
-    double calc()
-    {
-        return mcost;
-    }
-};
-
-;
-
-class Transaction
+class Transaction : public Details
 {
 private:
     int transaction_id;
-    float amount;
+    int amount;
     string method;
     string status;
     Details customer_details;
@@ -629,60 +513,25 @@ public:
     // Constructors
     Transaction() {}
 
-    Transaction(int id, float cost, string pay_method, string stat, Details det, Itineraries pl)
-    {
-        transaction_id = id;
-        amount = cost;
-        method = pay_method;
-        status = stat;
-        customer_details = det;
-        plan = pl;
-    }
-
     // Setters and Getters
     void setTransactionId(int id) { transaction_id = id; }
-    void setAmount(float cost) { amount = cost; }
+    void setAmount(int cost) { amount = cost; }
     void setMethod(string pay_method) { method = pay_method; }
     void setStatus(string stat) { status = stat; }
     void setCustomerDetails(Details det) { customer_details = det; }
     void setPlan(Itineraries pl) { plan = pl; }
 
     int getTransactionId() const { return transaction_id; }
-    float getAmount() const { return amount; }
+    int getAmount() const { return amount; }
     string getMethod() const { return method; }
     string getStatus() const { return status; }
     Details getCustomerDetails() const { return customer_details; }
-    Itineraries getPlan() const { return plan; }
-
-    // Other member functions
-    bool checkNewUser()
-    {
-        bool new_user = customer_details.checkNewUser();
-        if (new_user)
-        {
-            cout << "You need to login first to book a plan." << endl;
-            // Redirect to login page
-        }
-        return new_user;
-    }
-
-    void confirmTransaction()
-    {
-        // Check if user is logged in
-        if (checkNewUser())
-        {
-            return;
-        }
-
-        // Make payment
-        cout << "Transaction successful. Plan booked!" << endl;
-        setStatus("Success");
-    }
+    
 
     void cancelTransaction()
     {
         setStatus("Cancelled");
-        cout << "Transaction cancelled." << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\t\tTransaction cancelled.\n\n" << endl;
     }
 
     void viewTransaction()
@@ -692,9 +541,267 @@ public:
         cout << "Payment Method: " << getMethod() << endl;
         cout << "Status: " << getStatus() << endl;
         cout << "Customer Details:" << endl;
-        customer_details.displayUserdetails();
+        // customer_details.displayUserdetails();
         cout << "Plan Details:" << endl;
-        plan.viewPlan();
     }
+    friend class Itineraries;
 };
 
+int main()
+{
+    std::cout << "\033[35m";
+    cout << "\n\t\t\t\t\t\t\t\t\t\t\t......< WELCOME TO TOURIGO >......" << endl;
+    std::cout << "\033[0m";
+    cout << "\n\t\t\t\t\t\t\t\t\t\t_________________________________________________________\n\n\n";
+    std::cout << "\033[1m\033[36m"; // sets the text to bold and cyan color
+    std::cout << "\t\t\t\t\t\t\t\t\t\t\t\t__ __    __     ____\n"
+                 "\t\t\t\t\t\t\t\t\t\t\t\t|_   _| / _|   / __ \\ \n"
+                 "\t\t\t\t\t\t\t\t\t\t\t\t  | |  | | __  | | | |\n"
+                 "\t\t\t\t\t\t\t\t\t\t\t\t  | |  | || || | |_| |\n"
+                 "\t\t\t\t\t\t\t\t\t\t\t\t  |_|   \\___/   \\____/\n";
+    std::cout << "\033[0m";
+    Details d;
+    Location l;
+    while(b){
+        int choice;
+        std::cout << "\033[31m";
+        cout << "\n\t\t\t\t\t\t\t\t\t\t1. Sign up" << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\t2. Sign in" << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\t3. Exit" << endl;
+        std::cout << "\033[0m";
+        std::cout << "\033[32m";
+        cout << "\n\t\t\t\t\t\t\t\t\t\tPlease select an option: \t";
+        cin >> choice;
+        std::cout << "\033[0m";
+        cin.ignore(); // ignore any remaining input after the integer
+        switch (choice)
+        {
+        case 1:
+            signup();
+            break;
+        case 2:
+            signin();
+            break;
+        case 3:
+            cout << "\033[35m";
+            cout << "\n\n\t\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t\t\t Thank You for Using our Services" << endl;
+    cout << "\n\t\t\t\t\t\t\t\t\t\t\t Be Sure to Visit Again" << endl;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\033[0m";
+    exit(0);
+    break;
+        default:
+            cout << "\n\t\t\t\t\t\t\t\t\tInvalid choice. Please try again." << endl;
+            break;
+        }
+    }
+    system("pause");
+    system("CLS");
+    string source, destination;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    std::cout << "\033[32m";
+    cout << "\n\n\t\t\t\t\t\t\t\t\tEnter Source Location : ";
+    cin >> source;
+    l.setSourceName(source);
+    std::cout << "\033[0m";
+    cout << "\033[0;35m";
+    cout << "\n\n\t\t\t\t\t\t\t\t\tSelect one of the following: \n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t1. Himachal Pradesh\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t2. Kerala\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t3. Delhi\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t4. Tamil Nadu\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t5. Jaipur\n";
+    std::cout << "\033[0m";
+    cout << "\033[96m";
+    cout << "\n\n\t\t\t\t\t\t\t\t\tEnter Destination Location : ";
+    cin >> destination;
+    l.setDestinationName(destination);
+    
+    cout << "\n\n\t\t\t\t\t\t\t\t\tDescription of the Destination Location: ";
+    l.viewDestinationName(l.getDestinationName());
+    std::cout << "\033[0m";
+    cout << "\n\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    system("pause");
+    system("CLS");
+    
+    Itineraries plans[3];
+    Transport t;
+    Accomodation a;
+    int nopeople;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\tEnter Number of People : ";
+    cin >> nopeople;
+    for (int i = 0; i < 3; i++)
+    {
+        plans[i].setno_of_people(nopeople);
+    }
+    a.aipon(plans);
+    t.tipon(plans);
+    cout << "\n\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    system("pause");
+    system("CLS");
+    plans[0].setNameOfPlan("Monthly Plan");
+    plans[1].setNameOfPlan("Weekly Plan");
+    plans[2].setNameOfPlan("Holiday Plan");
+    plans[0].setNoOfDays(30);
+    plans[1].setNoOfDays(7);
+    plans[2].setNoOfDays(10);
+
+    for (int i = 0; i < 3; i++)
+    {
+        plans[i].setPlanCost(plans[i].getNoOfDays() * plans[i].getno_of_people() * (a.getAplancost() + t.getTPLanCost()));
+    }
+    // plans[i].plancost = plans[i].noofdays * plans[i].noofpeople * fcost
+    // where fcost = aplancost + tplancost
+
+    const int field_width = 35; // set column width for each field
+    const int space_width = 5;  // set width of space between columns
+    cout << "\n\t\t\t\t\t\t\t\t\t\t\t\tPLANS\n\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n\n";
+    // Print information for Plan 1, Plan 2, and Plan 3 side by side
+    cout << left << setw(field_width) << "\t\tPlan 1: " + plans[0].getNameOfPlan();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tPlan 2: " + plans[1].getNameOfPlan();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tPlan 3: " + plans[2].getNameOfPlan();
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tSource name: " + l.getSourceName();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tSource name: " + l.getSourceName();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tSource name: " + l.getSourceName();
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tDestination name: " + l.getDestinationName();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tDestination name: " + l.getDestinationName();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tDestination name: " + l.getDestinationName();
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tNumber of days: " + to_string(plans[0].getNoOfDays());
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tNumber of days: " + to_string(plans[1].getNoOfDays());
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tNumber of days: " + to_string(plans[2].getNoOfDays());
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tTotal Cost: " + to_string(plans[0].getPlanCost()) + " Rs";
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tTotal Cost: " + to_string(plans[1].getPlanCost()) + " Rs";
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tTotal Cost: " + to_string(plans[2].getPlanCost()) + " Rs";
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tNumber of people: " + to_string(plans[0].getno_of_people());
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tNumber of people: " + to_string(plans[1].getno_of_people());
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tNumber of people: " + to_string(plans[2].getno_of_people());
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tAccomodation Facility: " + plans[0].getAccomodation();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tAccomodation Facility: " + plans[1].getAccomodation();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tAccomodation Facility: " + plans[2].getAccomodation();
+    cout << endl;
+
+    cout << left << setw(field_width) << "\t\tTransport Facility: " + plans[0].getTransport();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tTransport Facility: " + plans[1].getTransport();
+    cout << left << setw(space_width) << "\t\t ";
+    cout << left << setw(field_width) << "\t\tTransport Facility: " + plans[2].getTransport();
+    cout << endl;
+    int ch;
+    Transaction tx;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t\tChoose Plan :  ";
+    cin >> ch;
+    // if ch==1 then transaction.amount = plan[0].getplancost(), Similar for other plans.
+    if (ch == 1)
+    {
+        tx.setAmount(plans[0].getPlanCost());
+    }
+    else if (ch == 2)
+    {
+        tx.setAmount(plans[1].getPlanCost());
+    }
+    else if (ch == 3)
+    {
+        tx.setAmount(plans[2].getPlanCost());
+    }
+    else
+    {
+        cout << "\n\t\t\t\t\t\t\t\t\t\tSelect a Valid Plan!!";
+    }
+    system("pause");
+    system("CLS");
+    // Transaction code
+    char p;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\tDo you want to proceed with the transaction? (Y/N): ";
+    cin >> p;
+    if (toupper(p) == 'Y')
+    {
+        // Ask for payment method
+        string method;
+        cout << "\n\t\t\t\t\t\t\t\t\tEnter payment method (Credit Card/Debit Card/UPI): ";
+        cin >> method;
+        if (method == "UPI")
+        {
+            int id;
+            cout << "\n\t\t\t\t\t\t\t\t\tEnter UPI ID : ";
+            cin >> id;
+        }
+        else if (method == "Credit Card" || method == "cc")
+        {
+            int cn, cv;
+            cout << "\n\t\t\t\t\t\t\t\t\tEnter Credit Card Number : ";
+            cin >> cn;
+            cout << "\n\t\t\t\t\t\t\t\t\tEnter CVV : ";
+            cin >> cv;
+        }
+        else if (method == "Debit Card")
+        {  
+            int pin;
+            cout << "\n\t\t\t\t\t\t\t\t\tEnter PIN Number : ";
+            cin >> pin;
+        }
+        
+        std::cout << "\033[1m\033[36m";
+        std::cout << "\033[50m";
+        std::cout << "\n\t\t\t\t\t\t\t\t\t\t\t\tPAY\n\n";
+        std::cout << "\033[0m";
+        system("pause");
+        system("CLS");
+        cout << "\n\n\t\t\t\t\t\tYour Payment is being Processed\n\n" ;
+        system("pause");
+        system("CLS");
+        tx.setMethod(method);
+        tx.setStatus("Success");
+        cout << "\n\n\t\t\t\t\t\t\t\t\t Billing Deatils : " << endl;
+        cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+        cout << "\n\t\t\t\t\t\t\t\t\t\tTransaction ID: " << tx.getTransactionId() << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\tAmount: " << tx.getAmount() << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\tPayment Method: " << tx.getMethod() << endl;
+        cout << "\n\t\t\t\t\t\t\t\t\t\tStatus: " << tx.getStatus() << endl;
+    }
+    else if (toupper(p) == 'N')
+    {
+        // Cancel transaction
+        tx.cancelTransaction();
+    }else{
+        cout << "\n\t\t\t\t\t\t\t\t\t\tINVALID OPTION" << endl;
+    }
+    system("pause");
+    system("CLS");
+    cout << "\033[35m";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\n\n\t\t\t\t\t\t\t\t\t\t Thank You for Using our Services" << endl;
+    cout << "\n\t\t\t\t\t\t\t\t\t\t Be Sure to Visit Again" << endl;
+    cout << "\n\n\t\t\t\t\t\t\t\t\t----------------------------------------------------------\n";
+    cout << "\033[0m";
+}
